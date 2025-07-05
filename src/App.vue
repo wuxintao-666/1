@@ -1,101 +1,151 @@
 <template>
-  <div class="container">
-    <header>
-      <h1><i class="fas fa-book-open"></i> 渐进式API文档披露系统</h1>
-      <p class="subtitle">基于Judicious论文理念，根据用户在不同披露等级上的停留时间，智能判断用户是API新手还是经验丰富的开发者</p>
-    </header>
-    
-    <div class="content">
-      <div class="left-panel">
-        <h2>选择学习主题</h2>
-        <div class="topic-selector">
-          <div 
-            v-for="(topic, key) in apiTopics" 
-            :key="key"
-            :class="['topic-item', { active: currentTopic === key }]"
-            @click="selectTopic(key)"
-          >
-            <div class="topic-name">{{ topic.name }}</div>
-            <div class="topic-desc">{{ topic.description }}</div>
-          </div>
-        </div>
-        
-        <div class="progress-container">
-          <div class="progress-bar">
-            <div class="progress-fill" :style="{ width: progressWidth + '%' }"></div>
-          </div>
-          <div class="levels">
-            <div 
-              v-for="level in 4" 
-              :key="level"
-              :class="['level', { active: currentLevel === level }]"
-            >
-              级别{{ level }}
-            </div>
-          </div>
-        </div>
-        
-        <div class="timer-display">
-          <p>当前级别停留时间: <span class="time-info">{{ currentTimer }}</span> 秒</p>
-          <p>级别1累计时间: <span class="time-info">{{ levelTimes[1] }}</span> 秒 | 级别2: <span class="time-info">{{ levelTimes[2] }}</span> 秒</p>
-          <p>级别3累计时间: <span class="time-info">{{ levelTimes[3] }}</span> 秒 | 级别4: <span class="time-info">{{ levelTimes[4] }}</span> 秒</p>
-          <p>总停留时间: <span class="time-info">{{ totalTime }}</span> 秒</p>
-        </div>
+  <div class="doc-container">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h2><i class="fas fa-book"></i> 文档目录</h2>
       </div>
       
-      <div class="right-panel">
-        <div class="function-display">
-          <div class="level-indicator">级别 {{ currentLevel }}/4</div>
-          <div class="function-name">{{ apiTopics[currentTopic].name }}</div>
-          
-          <div class="function-desc" v-html="apiTopics[currentTopic].contents[currentLevel]"></div>
+      <nav class="sidebar-nav">
+        <div 
+          v-for="(topic, key) in apiTopics" 
+          :key="key"
+          :class="['nav-item', { active: currentTopic === key }]"
+          @click="selectTopic(key)"
+        >
+          <div class="nav-item-name">{{ topic.name }}</div>
+          <div class="nav-item-desc">{{ topic.description }}</div>
         </div>
-        
-        <div class="controls">
-          <div class="btn-group">
-            <button 
-              class="prev-btn" 
-              @click="prevLevel" 
-              :disabled="currentLevel === 1 || finished"
-            >
-              <i class="fas fa-arrow-left"></i> 上一级
-            </button>
-            <button 
-              class="next-btn" 
-              @click="nextLevel" 
-              :disabled="currentLevel === 4 || finished"
-            >
-              下一级 <i class="fas fa-arrow-right"></i>
-            </button>
-            <button 
-              v-if="currentLevel === 4 && !finished"
-              class="finish-btn" 
-              @click="finishReading"
-            >
-              <i class="fas fa-flag-checkered"></i> 阅览完毕
-            </button>
-          </div>
-          <button class="reset-btn" @click="reset">
-            <i class="fas fa-sync-alt"></i> 重新开始
-          </button>
-        </div>
-        
-        <div class="analysis">
-          <h2><i class="fas fa-chart-line"></i> 用户类型分析</h2>
-          <div 
-            :class="['user-type', userTypeClass, { show: userType }]"
-            v-if="userType"
-          >
-            {{ userType }}
-          </div>
-          <div class="analysis-desc" v-html="analysisDesc"></div>
-        </div>
+      </nav>
+      
+      <div class="sidebar-footer">
+        <button 
+          class="progressive-btn" 
+          @click="toggleView"
+        >
+          <i class="fas fa-layer-group"></i> 
+          {{ showProgressive ? '返回文档' : '渐进式文档' }}
+        </button>
       </div>
-    </div>
-    
-    <footer>
-      <p>基于 Judicious: API Documentation for Novices 论文概念设计 | 渐进式披露教学系统 | Vue3版本</p>
-    </footer>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="doc-content">
+      <transition name="fade" mode="out-in">
+        <div :key="showProgressive ? 'progressive' : 'doc'">
+          <div v-if="loading" class="loading-indicator">
+            <i class="fas fa-spinner fa-spin"></i> 加载中...
+          </div>
+          <template v-else>
+            <template v-if="!showProgressive">
+              <h1>{{ apiTopics[currentTopic].name }}</h1>
+              <div class="doc-body" v-html="apiTopics[currentTopic].contents[4]"></div>
+            </template>
+            <template v-else>
+              <!-- Original Progressive Learning Interface -->
+              <div class="container">
+                <header>
+                  <h1><i class="fas fa-book-open"></i> 渐进式API文档披露系统</h1>
+                  <p class="subtitle">基于Judicious论文理念，根据用户在不同披露等级上的停留时间，智能判断用户是API新手还是经验丰富的开发者</p>
+                </header>
+                
+                <div class="content">
+                  <div class="left-panel">
+                    <h2>选择学习主题</h2>
+                    <div class="topic-selector">
+                      <div 
+                        v-for="(topic, key) in apiTopics" 
+                        :key="key"
+                        :class="['topic-item', { active: currentTopic === key }]"
+                        @click="selectTopic(key)"
+                      >
+                        <div class="topic-name">{{ topic.name }}</div>
+                        <div class="topic-desc">{{ topic.description }}</div>
+                      </div>
+                    </div>
+                    
+                    <div class="progress-container">
+                      <div class="progress-bar">
+                        <div class="progress-fill" :style="{ width: progressWidth + '%' }"></div>
+                      </div>
+                      <div class="levels">
+                        <div 
+                          v-for="level in 4" 
+                          :key="level"
+                          :class="['level', { active: currentLevel === level }]"
+                        >
+                          级别{{ level }}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div class="timer-display">
+                      <p>当前级别停留时间: <span class="time-info">{{ currentTimer }}</span> 秒</p>
+                      <p>级别1累计时间: <span class="time-info">{{ levelTimes[1] }}</span> 秒 | 级别2: <span class="time-info">{{ levelTimes[2] }}</span> 秒</p>
+                      <p>级别3累计时间: <span class="time-info">{{ levelTimes[3] }}</span> 秒 | 级别4: <span class="time-info">{{ levelTimes[4] }}</span> 秒</p>
+                      <p>总停留时间: <span class="time-info">{{ totalTime }}</span> 秒</p>
+                    </div>
+                  </div>
+                  
+                  <div class="right-panel">
+                    <div class="function-display">
+                      <div class="level-indicator">级别 {{ currentLevel }}/4</div>
+                      <div class="function-name">{{ apiTopics[currentTopic].name }}</div>
+                      
+                      <div class="function-desc" v-html="apiTopics[currentTopic].contents[currentLevel]"></div>
+                    </div>
+                    
+                    <div class="controls">
+                      <div class="btn-group">
+                        <button 
+                          class="prev-btn" 
+                          @click="prevLevel" 
+                          :disabled="currentLevel === 1 || finished"
+                        >
+                          <i class="fas fa-arrow-left"></i> 上一级
+                        </button>
+                        <button 
+                          class="next-btn" 
+                          @click="nextLevel" 
+                          :disabled="currentLevel === 4 || finished"
+                        >
+                          下一级 <i class="fas fa-arrow-right"></i>
+                        </button>
+                        <button 
+                          v-if="currentLevel === 4 && !finished"
+                          class="finish-btn" 
+                          @click="finishReading"
+                        >
+                          <i class="fas fa-flag-checkered"></i> 阅览完毕
+                        </button>
+                      </div>
+                      <button class="reset-btn" @click="reset">
+                        <i class="fas fa-sync-alt"></i> 重新开始
+                      </button>
+                    </div>
+                    
+                    <div class="analysis">
+                      <h2><i class="fas fa-chart-line"></i> 用户类型分析</h2>
+                      <div 
+                        :class="['user-type', userTypeClass, { show: userType }]"
+                        v-if="userType"
+                      >
+                        {{ userType }}
+                      </div>
+                      <div class="analysis-desc" v-html="analysisDesc"></div>
+                    </div>
+                  </div>
+                </div>
+                
+                <footer>
+                  <p>基于 Judicious: API Documentation for Novices 论文概念设计 | 渐进式披露教学系统 | Vue3版本</p>
+                </footer>
+              </div>
+            </template>
+          </template>
+        </div>
+      </transition>
+    </main>
   </div>
 </template>
 
@@ -105,6 +155,10 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 export default {
   name: 'App',
   setup() {
+    const showProgressive = ref(false)
+    const loading = ref(false)
+    const startLearning = ref(false)
+    
     // 响应式数据
     const currentLevel = ref(1)
     const levelStartTime = ref(Date.now())
@@ -551,6 +605,15 @@ Object.keys("hello")           // 返回 ["0", "1", "2", "3", "4"]</pre>
       analysisDesc.value = '系统正在分析您在不同文档级别的行为模式。完成所有4个级别后，点击"阅览完毕"按钮，您将看到详细的用户类型分析报告。'
     }
 
+    const toggleView = () => {
+      startLearning.value = false
+      loading.value = true
+      showProgressive.value = !showProgressive.value
+      setTimeout(() => {
+        loading.value = false
+      }, 300)
+    }
+
     // 生命周期
     onMounted(() => {
       timerInterval.value = setInterval(() => {
@@ -566,6 +629,9 @@ Object.keys("hello")           // 返回 ["0", "1", "2", "3", "4"]</pre>
     })
 
     return {
+      showProgressive,
+      loading,
+      startLearning,
       currentLevel,
       levelTimes,
       finished,
@@ -581,8 +647,9 @@ Object.keys("hello")           // 返回 ["0", "1", "2", "3", "4"]</pre>
       reset,
       apiTopics,
       currentTopic,
-      selectTopic
+      selectTopic,
+      toggleView
     }
   }
 }
-</script> 
+</script>
