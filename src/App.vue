@@ -92,7 +92,9 @@
                       <div class="level-indicator">级别 {{ currentLevel }}/4</div>
                       <div class="function-name">{{ apiTopics[currentTopic].name }}</div>
                       
-                      <div class="function-desc" v-html="apiTopics[currentTopic].contents[currentLevel]"></div>
+                      <div class="function-desc-container">
+                        <div class="function-desc" v-html="apiTopics[currentTopic].contents[currentLevel]"></div>
+                      </div>
                     </div>
                     
                     <div class="controls">
@@ -616,15 +618,20 @@ Object.keys("hello")           // 返回 ["0", "1", "2", "3", "4"]</pre>
       loading.value = true
       showProgressive.value = !showProgressive.value
       
-      // 切换显示时控制计时器状态
+      // 重置所有时间相关状态
+      if (showProgressive.value) {
+        levelTimes.value = [0, 0, 0, 0, 0]
+        levelStartTime.value = Date.now()
+        currentTime.value = Date.now()
+        finished.value = false
+        userType.value = ''
+        analysisDesc.value = '系统正在分析您在不同文档级别的行为模式...'
+      }
+      
       timerEnabled.value = showProgressive.value
       
       setTimeout(() => {
         loading.value = false
-        if (showProgressive.value) {
-          levelStartTime.value = Date.now() // 开始计时
-          currentTime.value = Date.now()
-        }
       }, 300)
     }
     

@@ -529,3 +529,35 @@ footer {
 .start-learning-btn i {
     margin-right: 8px;
 }
+
+/* 文档内容滚动容器 - 只保留垂直滚动 */
+.function-desc-container {
+  max-height: 400px;
+  overflow-y: auto;
+  overflow-x: hidden; /* 禁用水平滚动 */
+  padding: 10px;
+  margin: 10px 0;
+  background: #f8f9fa;
+  border-radius: 8px;
+  white-space: normal; /* 确保文本自动换行 */
+}
+
+/* 仅保留垂直滚动条 */
+.function-desc-container::-webkit-scrollbar {
+  width: 8px;
+  height: 0; /* 隐藏水平滚动条 */
+}
+
+.function-desc-container::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.function-desc-container::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+.function-desc-container::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
