@@ -158,6 +158,7 @@ export default {
     const showProgressive = ref(false)
     const loading = ref(false)
     const startLearning = ref(false)
+    const timerEnabled = ref(false) // 新增计时器启用状态
     
     // 响应式数据
     const currentLevel = ref(1)
@@ -582,14 +583,13 @@ Object.keys("hello")           // 返回 ["0", "1", "2", "3", "4"]</pre>
     }
 
     const reset = () => {
-      // 重置所有时间
-      for (let i = 1; i <= 4; i++) {
-        levelTimes.value[i] = 0
-      }
+      // 重置所有级别时间为0
+      levelTimes.value = [0, 0, 0, 0, 0]
       
       currentLevel.value = 1
       finished.value = false
       levelStartTime.value = Date.now()
+      currentTime.value = Date.now()  // 强制更新当前时间
       
       // 重置用户类型分析
       userType.value = ''
@@ -597,11 +597,17 @@ Object.keys("hello")           // 返回 ["0", "1", "2", "3", "4"]</pre>
     }
 
     const selectTopic = (topicKey) => {
+      // 重置所有级别时间为0
+      levelTimes.value = [0, 0, 0, 0, 0]
+      
       currentTopic.value = topicKey
       currentLevel.value = 1 // 切换主题时重置到第一级
       finished.value = false // 切换主题时重置完成状态
       levelStartTime.value = Date.now() // 切换主题时重置开始时间
-      userType.value = '' // 切换主题时重置用户类型
+      currentTime.value = Date.now() // 强制更新当前时间
+      
+      // 重置用户类型分析
+      userType.value = ''
       analysisDesc.value = '系统正在分析您在不同文档级别的行为模式。完成所有4个级别后，点击"阅览完毕"按钮，您将看到详细的用户类型分析报告。'
     }
 
@@ -609,16 +615,26 @@ Object.keys("hello")           // 返回 ["0", "1", "2", "3", "4"]</pre>
       startLearning.value = false
       loading.value = true
       showProgressive.value = !showProgressive.value
+      
+      // 切换显示时控制计时器状态
+      timerEnabled.value = showProgressive.value
+      
       setTimeout(() => {
         loading.value = false
+        if (showProgressive.value) {
+          levelStartTime.value = Date.now() // 开始计时
+          currentTime.value = Date.now()
+        }
       }, 300)
     }
-
+    
     // 生命周期
     onMounted(() => {
       timerInterval.value = setInterval(() => {
-        // 更新currentTime来触发计算属性重新计算
-        currentTime.value = Date.now()
+        // 只在计时器启用时更新时间
+        if (timerEnabled.value) {
+          currentTime.value = Date.now()
+        }
       }, 1000)
     })
 
