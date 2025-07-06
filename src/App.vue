@@ -6,6 +6,18 @@
         <h2><i class="fas fa-book"></i> 文档目录</h2>
       </div>
       
+      <div class="sidebar-search">
+        <input 
+          v-model="searchQuery" 
+          @keyup.enter="searchKnowledge"
+          placeholder="搜索知识点..."
+          class="search-input"
+        />
+        <button @click="searchKnowledge" class="search-btn">
+          <i class="fas fa-search"></i>
+        </button>
+      </div>
+      
       <nav class="sidebar-nav">
         <div 
           v-for="(topic, key) in apiTopics" 
@@ -39,7 +51,7 @@
           <template v-else>
             <template v-if="!showProgressive">
               <h1>{{ apiTopics[currentTopic].name }}</h1>
-              <div class="doc-body" v-html="apiTopics[currentTopic].contents[4]"></div>
+              <div class="doc-body" v-html="apiTopics[currentTopic].contents[5]"></div>
             </template>
             <template v-else>
               <!-- Original Progressive Learning Interface -->
@@ -152,6 +164,7 @@
 </template>
 
 <script>
+import axios from 'axios';
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 
 export default {
@@ -171,7 +184,8 @@ export default {
     const analysisDesc = ref('系统正在分析您在不同文档级别的行为模式。完成所有4个级别后，点击"阅览完毕"按钮，您将看到详细的用户类型分析报告。')
     const timerInterval = ref(null)
     const currentTime = ref(0) // 添加当前时间响应式变量来触发更新
-
+    const searchQuery = ref('') // 新增搜索输入框的值
+    
     // 添加多个API知识点
     const apiTopics = {
       'math.log': {
@@ -252,6 +266,17 @@ math.log(100, 10) // 返回 2</pre>
             <p style="margin-top: 20px; font-weight: bold; color: #9b59b6;">
               <i class="fas fa-info-circle"></i> 请点击"阅览完毕"按钮完成分析
             </p>
+          `,
+          5: `
+            <h2>math.log(x)知识点总结</h2>
+            <h3>基础概念:</h3>
+            <p>此函数计算一个数的对数。</p>
+            <h3>进阶理解:</h3>
+            <p>计算一个数的自然对数（以 e 为底）。</p>
+            <h3>高级应用:</h3>
+            <p>返回 x 的自然对数（以 e 为底）或指定底数的对数。</p>
+            <h3>专家分析:</h3>
+            <p>这是一个纯函数，无副作用</p>
           `
         }
       },
@@ -333,6 +358,17 @@ math.log(100, 10) // 返回 2</pre>
             <p style="margin-top: 20px; font-weight: bold; color: #9b59b6;">
               <i class="fas fa-info-circle"></i> 请点击"阅览完毕"按钮完成分析
             </p>
+          `,
+          5: `
+            <h2>array.map(callback)知识点总结</h2>
+            <h3>基础概念:</h3>
+            <p>此函数对数组中的每个元素执行一个操作。</p>
+            <h3>进阶理解:</h3>
+            <p>创建一个新数组，其结果是该数组中的每个元素调用提供的函数后的返回值。</p>
+            <h3>高级应用:</h3>
+            <p>返回一个新数组，包含原数组中的每个元素调用回调函数后的结果。</p>
+            <h3>专家分析:</h3>
+            <p>不会修改原数组，返回新数组</p>
           `
         }
       },
@@ -415,6 +451,17 @@ math.log(100, 10) // 返回 2</pre>
             <p style="margin-top: 20px; font-weight: bold; color: #9b59b6;">
               <i class="fas fa-info-circle"></i> 请点击"阅览完毕"按钮完成分析
             </p>
+          `,
+          5: `
+            <h2>string.split(separator)知识点总结</h2>
+            <h3>基础概念:</h3>
+            <p>此函数将字符串分割成数组。</p>
+            <h3>进阶理解:</h3>
+            <p>使用指定的分隔符将字符串分割成子字符串数组。</p>
+            <h3>高级应用:</h3>
+            <p>返回一个字符串数组，该数组是通过在指定的分隔符字符串处分割原字符串而创建的。</p>
+            <h3>专家分析:</h3>
+            <p>不会修改原字符串，返回新数组</p>
           `
         }
       },
@@ -496,6 +543,17 @@ Object.keys("hello")           // 返回 ["0", "1", "2", "3", "4"]</pre>
             <p style="margin-top: 20px; font-weight: bold; color: #9b59b6;">
               <i class="fas fa-info-circle"></i> 请点击"阅览完毕"按钮完成分析
             </p>
+          `,
+          5: `
+            <h2>Object.keys(obj)知识点总结</h2>
+            <h3>基础概念:</h3>
+            <p>此函数获取对象的所有键名。</p>
+            <h3>进阶理解:</h3>
+            <p>返回一个由指定对象的所有可枚举属性的键名组成的数组。</p>
+            <h3>高级应用:</h3>
+            <p>返回一个数组，包含指定对象的所有可枚举属性的键名。</p>
+            <h3>专家分析:</h3>
+            <p>不会修改原对象，返回新数组</p>
           `
         }
       }
@@ -651,6 +709,66 @@ Object.keys("hello")           // 返回 ["0", "1", "2", "3", "4"]</pre>
       }
     })
 
+    const searchKnowledge = async () => {
+      if (!searchQuery.value.trim()) return;
+      
+      loading.value = true;
+      
+      try {
+        const response = await axios.post('https://api.deepseek.com/v1/chat/completions', {
+          model: 'deepseek-chat',
+          messages: [
+            {
+              role: 'system',
+              content: '你是一个知识检索助手，请严格按照JSON格式返回四级知识点，包含以下字段：\n1. basic(基础概念)\n2. intermediate(进阶理解)\n3. advanced(高级应用)\n4. expert(专家分析)\n只返回纯JSON内容，不要任何解释或标记'
+            },
+            {
+              role: 'user',
+              content: `请提供关于"${searchQuery.value}"的四级知识点，按以下要求：\n1. basic: 简单定义(50字内)\n2. intermediate: 详细说明(100字)\n3. advanced: 实际应用案例\n4. expert: 深入分析和见解`
+            }
+          ],
+          response_format: { type: "json_object" },
+          temperature: 0.7
+        }, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer sk-c4f33ed515e64ffea0b457753a147678'
+          }
+        });
+        
+        // 解析JSON响应
+        const result = JSON.parse(response.data.choices[0].message.content);
+        
+        const topicKey = `search_${Date.now()}`;
+        apiTopics[topicKey] = {
+          name: `搜索结果: ${searchQuery.value}`,
+          description: '来自DeepSeek的知识点',
+          contents: {
+            1: result.basic || '暂无基础概念内容',
+            2: result.intermediate || '暂无进阶理解内容',
+            3: result.advanced || '暂无高级应用内容',
+            4: result.expert || '暂无专家分析内容',
+            5: `<h2>${searchQuery.value}知识点总结</h2>
+              <h3>基础概念:</h3>
+              <p>${result.basic || '暂无'}</p>
+              <h3>进阶理解:</h3>
+              <p>${result.intermediate || '暂无'}</p>
+              <h3>高级应用:</h3>
+              <p>${result.advanced || '暂无'}</p>
+              <h3>专家分析:</h3>
+              <p>${result.expert || '暂无'}</p>`
+          }
+        };
+        
+        selectTopic(topicKey);
+        showProgressive.value = true;
+      } catch (error) {
+        console.error('搜索出错:', error);
+      } finally {
+        loading.value = false;
+      }
+    };
+
     return {
       showProgressive,
       loading,
@@ -671,8 +789,40 @@ Object.keys("hello")           // 返回 ["0", "1", "2", "3", "4"]</pre>
       apiTopics,
       currentTopic,
       selectTopic,
-      toggleView
+      toggleView,
+      searchQuery,
+      searchKnowledge
     }
   }
 }
 </script>
+
+<style scoped>
+.sidebar-search {
+  padding: 15px;
+  display: flex;
+  gap: 8px;
+  border-bottom: 1px solid #e1e1e1;
+}
+
+.search-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.search-btn {
+  padding: 8px 12px;
+  background: #4a6fa5;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.search-btn:hover {
+  background: #3a5a8f;
+}
+</style>
