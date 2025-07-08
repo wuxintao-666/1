@@ -57,8 +57,8 @@
               <!-- Original Progressive Learning Interface -->
               <div class="container">
                 <header>
-                  <h1><i class="fas fa-book-open"></i> 渐进式API文档披露系统</h1>
-                  <p class="subtitle">基于Judicious论文理念，根据用户在不同披露等级上的停留时间，智能判断用户是API新手还是经验丰富的开发者</p>
+                  <h1><i class="fas fa-book-open"></i> 渐进式披露系统</h1>
+                  <p class="subtitle">根据用户在不同披露等级上的停留时间，智能判断用户是API新手还是经验丰富的开发者</p>
                 </header>
                 
                 <div class="content">
